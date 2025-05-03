@@ -25,7 +25,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Local Photos."""
 
     VERSION = 1
-
+    
     @staticmethod
     @callback
     def async_get_options_flow(
@@ -36,50 +36,53 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
         if user_input is None:
+            # Show album selection form
+            album_schema = await self._get_albumselect_schema()
             return self.async_show_form(
                 step_id="user",
-                data_schema=vol.Schema({}),
+                data_schema=album_schema,
             )
 
-        # Create default options
-        options = {}
-        options[CONF_ALBUM_ID] = [CONF_ALBUM_ID_FAVORITES]
-        options[CONF_WRITEMETADATA] = WRITEMETADATA_DEFAULT_OPTION
+        # User has selected an album, create the entry
+        album_id = user_input[CONF_ALBUM_ID]
+        
+        # Set title based on album selection
+        if album_id == CONF_ALBUM_ID_FAVORITES:
+            title = "Local Photos All"
+        else:
+            title = f"Local Photos {album_id}"
+            
+        # Create options with the selected album and always enable metadata
+        options = {
+            CONF_ALBUM_ID: [album_id],
+            CONF_WRITEMETADATA: True  # Always enable metadata
+        }
+
+        # Check if an entry with this album already exists
+        for entry in self._async_current_entries():
+            if entry.options.get(CONF_ALBUM_ID, []) == [album_id]:
+                return self.async_abort(reason="already_configured")
 
         return self.async_create_entry(
-            title="Local Photos",
+            title=title,
             data={},
             options=options,
         )
-
-
-class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle a option flow for local photos."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-
-    @property
-    def logger(self) -> logging.Logger:
-        """Return logger."""
-        return logging.getLogger(__name__)
-
+        
     async def _get_albumselect_schema(self) -> vol.Schema:
         """Return album selection form"""
         # Scan the photos directory for subdirectories to use as albums
         photos_dir = os.path.join(self.hass.config.config_dir, "www", "photos")
-        album_selection = {CONF_ALBUM_ID_FAVORITES: "Photos"}
+        album_selection = {CONF_ALBUM_ID_FAVORITES: "All Photos"}
         
         try:
             # Define a function to run in the executor
             def scan_albums():
                 albums_info = {}
                 if not os.path.exists(photos_dir):
+                    # Create the directory if it doesn't exist
+                    os.makedirs(photos_dir)
                     return albums_info
                     
                 for item in os.listdir(photos_dir):
@@ -98,7 +101,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             albums = await self.hass.async_add_executor_job(scan_albums)
             album_selection.update(albums)
         except Exception as err:
-            self.logger.error("Error scanning albums: %s", err)
+            _LOGGER.error("Error scanning albums: %s", err)
 
         return vol.Schema(
             {
@@ -106,56 +109,22 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             }
         )
 
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle a option flow for local photos."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
     async def async_step_init(self, user_input=None):
         """Handle options flow."""
-        return self.async_show_menu(
+        if user_input is not None:
+            return self.async_create_entry(title="", data=self.config_entry.options)
+            
+        return self.async_show_form(
             step_id="init",
-            menu_options=["albumselect", "settings"],
             description_placeholders={
                 "model": "Local Photos",
             },
         )
-
-    async def async_step_albumselect(self, user_input: dict[str, Any] = None) -> FlowResult:
-        """Set the album used."""
-        self.logger.debug(
-            "async_albumselect_confirm called with user_input: %s", user_input
-        )
-
-        # user input was not provided.
-        if user_input is None:
-            data_schema = await self._get_albumselect_schema()
-            return self.async_show_form(step_id="albumselect", data_schema=data_schema)
-
-        # user input was provided, store the album id
-        options = dict(self.config_entry.options)
-        album_id_list = options.get(CONF_ALBUM_ID, [])
-        if not user_input[CONF_ALBUM_ID] in album_id_list:
-            album_id_list.append(user_input[CONF_ALBUM_ID])
-            options[CONF_ALBUM_ID] = album_id_list
-            return self.async_create_entry(title="", data=options)
-        return self.async_create_entry(title="", data=options)
-
-    async def async_step_settings(self, user_input: dict[str, Any] = None) -> FlowResult:
-        """Set the settings used."""
-        self.logger.debug("async_step_settings called with user_input: %s", user_input)
-
-        # user input was not provided.
-        if user_input is None:
-            options = dict(self.config_entry.options)
-            data_schema = vol.Schema(
-                {
-                    vol.Required(
-                        CONF_WRITEMETADATA,
-                        default=options.get(
-                            CONF_WRITEMETADATA, WRITEMETADATA_DEFAULT_OPTION
-                        ),
-                    ): bool,
-                }
-            )
-            return self.async_show_form(step_id="settings", data_schema=data_schema)
-
-        # user input was provided, store the settings
-        options = dict(self.config_entry.options)
-        options[CONF_WRITEMETADATA] = user_input[CONF_WRITEMETADATA]
-        return self.async_create_entry(title="", data=options)

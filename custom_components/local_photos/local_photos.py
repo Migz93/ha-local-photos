@@ -128,7 +128,7 @@ class LocalPhotosManager:
         # Add the main "ALL" album that includes all photos
         all_album = Album(
             id=self.config.get(CONF_ALBUM_ID_FAVORITES, "ALL"),
-            title="Photos",
+            title="All",
             path=photos_dir
         )
         self.albums[all_album.id] = all_album

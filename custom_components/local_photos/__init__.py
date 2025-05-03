@@ -44,6 +44,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.error("Error creating photos directory: %s", err)
             raise ConfigEntryNotReady from err
     
+    # Ensure metadata is always enabled
+    options = dict(entry.options)
+    options["write_metadata"] = True
+    
     # Initialize the coordinator manager
     coordinator_manager = CoordinatorManager(hass, entry)
     # Initialize the coordinator manager asynchronously
@@ -52,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = dict(
         {
             "coordinator_manager": coordinator_manager,
-            "loaded_options": {**entry.options},
+            "loaded_options": options,
         }
     )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

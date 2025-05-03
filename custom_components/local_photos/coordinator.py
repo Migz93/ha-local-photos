@@ -152,6 +152,12 @@ class Coordinator(DataUpdateCoordinator):
 
     def get_device_info(self) -> DeviceInfo:
         """Fetches device info for coordinator instance"""
+        # Use album title for device name
+        if self.album_id == CONF_ALBUM_ID_FAVORITES:
+            device_name = "Local Photos All"
+        else:
+            device_name = f"Local Photos {self.album.title}"
+            
         return DeviceInfo(
             identifiers={
                 (
@@ -161,7 +167,7 @@ class Coordinator(DataUpdateCoordinator):
                 )
             },
             manufacturer=MANUFACTURER,
-            name=self.album.title,
+            name=device_name,
             configuration_url=None,
         )
 

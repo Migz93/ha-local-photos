@@ -45,8 +45,10 @@ Platform | Name | Description
 
 ## Configuration
 1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Local Photos".
-2. Click on the integration and follow the setup process.
-3. The integration will create a `/config/www/photos` directory if it doesn't already exist. This is where you'll store your photos.
+2. Click on the integration and you'll be presented with a list of available albums (subdirectories) in your `/config/www/photos` directory.
+3. Select the album you want to display. If you want to display all photos, select "All Photos".
+4. The integration will create a `/config/www/photos` directory if it doesn't already exist. This is where you'll store your photos.
+5. To add another album, simply add the integration again and select a different album.
 
 ### Adding Photos
 
@@ -60,11 +62,12 @@ Platform | Name | Description
 
 ### Adding Albums to Home Assistant
 
-1. After adding photos to your directories, go to the Local Photos integration card in Home Assistant.
-2. Click "Configure" on the integration card.
-3. Select "Album Select" from the menu.
-4. Choose the album you want to add from the dropdown menu and click "Submit".
-5. The album will now be available as a camera entity in Home Assistant.
+1. After adding photos to your directories, go to "Configuration" -> "Integrations" and click "+".
+2. Search for and select "Local Photos".
+3. You'll be presented with a list of available albums (subdirectories) in your `/config/www/photos` directory.
+4. Select the album you want to add and click "Submit".
+5. The album will now be available as a camera entity in Home Assistant with a device name that reflects the selected album (e.g., "Local Photos Vacation").
+6. Repeat this process for each album you want to add to Home Assistant.
 
 ## Crop modes
 
