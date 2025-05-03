@@ -1,4 +1,4 @@
-"""Support for Google Photos Albums."""
+"""Support for Local Photos Albums."""
 from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
@@ -24,7 +24,7 @@ from .coordinator import Coordinator, CoordinatorManager
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Set up the Google Photos selections."""
+    """Set up the Local Photos selections."""
     entry_data = hass.data[DOMAIN][entry.entry_id]
     coordinator_manager: CoordinatorManager = entry_data.get("coordinator_manager")
 
@@ -32,9 +32,9 @@ async def async_setup_entry(
     entities = []
     for album_id in album_ids:
         coordinator = await coordinator_manager.get_coordinator(album_id)
-        entities.append(GooglePhotosSelectCropMode(coordinator))
-        entities.append(GooglePhotosSelectImageSelectionMode(coordinator))
-        entities.append(GooglePhotosSelectInterval(coordinator))
+        entities.append(LocalPhotosSelectCropMode(coordinator))
+        entities.append(LocalPhotosSelectImageSelectionMode(coordinator))
+        entities.append(LocalPhotosSelectInterval(coordinator))
 
     async_add_entities(
         entities,
@@ -42,7 +42,7 @@ async def async_setup_entry(
     )
 
 
-class GooglePhotosSelectCropMode(SelectEntity, RestoreEntity):
+class LocalPhotosSelectCropMode(SelectEntity, RestoreEntity):
     """Selection of crop mode"""
 
     coordinator: Coordinator
@@ -60,7 +60,7 @@ class GooglePhotosSelectCropMode(SelectEntity, RestoreEntity):
             entity_category=EntityCategory.CONFIG,
             options=SETTING_CROP_MODE_OPTIONS,
         )
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_device_info = self.coordinator.get_device_info()
         self._attr_unique_id = f"{album_id}-crop-mode"
 
@@ -91,7 +91,7 @@ class GooglePhotosSelectCropMode(SelectEntity, RestoreEntity):
         self.async_write_ha_state()
 
 
-class GooglePhotosSelectImageSelectionMode(SelectEntity, RestoreEntity):
+class LocalPhotosSelectImageSelectionMode(SelectEntity, RestoreEntity):
     """Selection of image selection mode"""
 
     coordinator: Coordinator
@@ -109,7 +109,7 @@ class GooglePhotosSelectImageSelectionMode(SelectEntity, RestoreEntity):
             entity_category=EntityCategory.CONFIG,
             options=SETTING_IMAGESELECTION_MODE_OPTIONS,
         )
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_device_info = self.coordinator.get_device_info()
         self._attr_unique_id = f"{album_id}-image-selection-mode"
 
@@ -142,7 +142,7 @@ class GooglePhotosSelectImageSelectionMode(SelectEntity, RestoreEntity):
         self.async_write_ha_state()
 
 
-class GooglePhotosSelectInterval(SelectEntity, RestoreEntity):
+class LocalPhotosSelectInterval(SelectEntity, RestoreEntity):
     """Selection of image update interval"""
 
     coordinator: Coordinator
@@ -160,7 +160,7 @@ class GooglePhotosSelectInterval(SelectEntity, RestoreEntity):
             entity_category=EntityCategory.CONFIG,
             options=SETTING_INTERVAL_OPTIONS,
         )
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_device_info = self.coordinator.get_device_info()
         self._attr_unique_id = f"{album_id}-interval"
 

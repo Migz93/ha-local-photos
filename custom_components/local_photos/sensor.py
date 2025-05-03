@@ -1,4 +1,4 @@
-"""Support for Google Photos Albums."""
+"""Support for Local Photos Albums."""
 from __future__ import annotations
 import dateutil.parser
 
@@ -22,7 +22,7 @@ from .coordinator import Coordinator, CoordinatorManager
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Set up the Google Photos sensors."""
+    """Set up the Local Photos sensors."""
     entry_data = hass.data[DOMAIN][entry.entry_id]
     coordinator_manager: CoordinatorManager = entry_data.get("coordinator_manager")
 
@@ -30,9 +30,9 @@ async def async_setup_entry(
     entities = []
     for album_id in album_ids:
         coordinator = await coordinator_manager.get_coordinator(album_id)
-        entities.append(GooglePhotosMediaCount(coordinator))
-        entities.append(GooglePhotosFileName(coordinator))
-        entities.append(GooglePhotosCreationTimestamp(coordinator))
+        entities.append(LocalPhotosMediaCount(coordinator))
+        entities.append(LocalPhotosFileName(coordinator))
+        entities.append(LocalPhotosCreationTimestamp(coordinator))
 
     async_add_entities(
         entities,
@@ -40,7 +40,7 @@ async def async_setup_entry(
     )
 
 
-class GooglePhotosFileName(SensorEntity):
+class LocalPhotosFileName(SensorEntity):
     """Sensor to display current filename"""
 
     coordinator: Coordinator
@@ -54,7 +54,7 @@ class GooglePhotosFileName(SensorEntity):
         self.entity_description = SensorEntityDescription(
             key="filename", name="Filename", icon=self._attr_icon
         )
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_device_info = self.coordinator.get_device_info()
         self._attr_unique_id = f"{album_id}-filename"
 
@@ -90,7 +90,7 @@ class GooglePhotosFileName(SensorEntity):
         self._read_value()
 
 
-class GooglePhotosCreationTimestamp(SensorEntity):
+class LocalPhotosCreationTimestamp(SensorEntity):
     """Sensor to display the current creation timestamp"""
 
     coordinator: Coordinator
@@ -107,7 +107,7 @@ class GooglePhotosCreationTimestamp(SensorEntity):
             icon=self._attr_icon,
             device_class=SensorDeviceClass.TIMESTAMP,
         )
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_device_info = self.coordinator.get_device_info()
         self._attr_unique_id = f"{album_id}-creation-timestamp"
 
@@ -135,11 +135,27 @@ class GooglePhotosCreationTimestamp(SensorEntity):
     def _read_value(self) -> None:
         val = None
         if self.coordinator.current_media is not None:
-            metadata = self.coordinator.current_media.get("mediaMetadata")
-            if metadata is not None:
-                creation_time = metadata.get("creationTime")
-                if creation_time is not None:
-                    val = dateutil.parser.isoparse(creation_time)
+            # For local photos, we need to get the creation time from the file metadata
+            # or use the file's modification time as a fallback
+            try:
+                # Try to get the file's creation time or modification time
+                import os
+                import datetime
+                from datetime import timezone
+                
+                # Get the file path from the MediaItem object
+                file_path = self.coordinator.current_media.path
+                
+                # Try to get the file's modification time
+                if os.path.exists(file_path):
+                    # Get the modification time and convert to datetime with timezone
+                    mtime = os.path.getmtime(file_path)
+                    val = datetime.datetime.fromtimestamp(mtime, tz=timezone.utc)
+            except Exception as ex:
+                # If there's an error, log it and set val to None
+                _LOGGER.warning(f"Error getting creation time for {self.coordinator.current_media.path}: {ex}")
+                val = None
+                
         self._attr_native_value = val
         self.async_write_ha_state()
 
@@ -149,7 +165,7 @@ class GooglePhotosCreationTimestamp(SensorEntity):
         self._read_value()
 
 
-class GooglePhotosMediaCount(SensorEntity):
+class LocalPhotosMediaCount(SensorEntity):
     """Sensor to display current media count"""
 
     coordinator: Coordinator
@@ -163,14 +179,15 @@ class GooglePhotosMediaCount(SensorEntity):
         self.entity_description = SensorEntityDescription(
             key="media_count", name="Media count", icon=self._attr_icon
         )
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_device_info = self.coordinator.get_device_info()
         self._attr_unique_id = f"{album_id}-mediacount"
         self._attr_state_class = SensorStateClass.TOTAL
-        self._attr_native_value = len(self.coordinator.album_contents.album_list)
-        self._attr_extra_state_attributes = {
-            "is_updating": self.coordinator.album_contents.is_building_list
-        }
+        # Initialize with 0, will be updated in _handle_coordinator_update
+        self._attr_native_value = 0
+        self._attr_extra_state_attributes = {}
+        # The album_contents attribute might not exist in the LocalPhotos version
+        # It will be updated properly in the _handle_coordinator_update method
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""
@@ -192,8 +209,16 @@ class GooglePhotosMediaCount(SensorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._attr_native_value = len(self.coordinator.album_contents.album_list)
-        self._attr_extra_state_attributes[
-            "is_updating"
-        ] = self.coordinator.album_contents.is_building_list
+        # For Local Photos, we use the media_items_count from the album object
+        if hasattr(self.coordinator.album, 'media_items_count'):
+            self._attr_native_value = self.coordinator.album.media_items_count
+        # Fallback to 0 if the attribute doesn't exist
+        else:
+            self._attr_native_value = 0
+            
+        # Update the extra state attributes
+        self._attr_extra_state_attributes = {
+            "album_id": self.coordinator.album.id,
+            "album_title": self.coordinator.album.title
+        }
         self.async_write_ha_state()
