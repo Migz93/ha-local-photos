@@ -302,7 +302,10 @@ class Coordinator(DataUpdateCoordinator):
                     
                 # Process the image with PIL to resize/crop as needed
                 with Image.open(io.BytesIO(image_data)) as img:
-                    # Get original dimensions
+                    # Apply EXIF orientation first
+                    img = self._apply_exif_orientation(img)
+                    
+                    # Get original dimensions (after orientation correction)
                     original_width, original_height = img.size
                     
                     # Calculate new dimensions while maintaining aspect ratio
@@ -315,7 +318,9 @@ class Coordinator(DataUpdateCoordinator):
                     
                     # Convert the resized image back to bytes
                     img_byte_arr = io.BytesIO()
-                    img_resized.save(img_byte_arr, format=img.format or 'JPEG')
+                    # Preserve the original format if possible
+                    img_format = img.format if img.format else 'JPEG'
+                    img_resized.save(img_byte_arr, format=img_format, quality=95)
                     return img_byte_arr.getvalue()
             
             # Run the file operations in a separate thread
@@ -403,27 +408,43 @@ class Coordinator(DataUpdateCoordinator):
                 # Create the combined image
                 with Image.new("RGB", (width, height), "white") as output:
                     # Process primary image
-                    with Image.open(io.BytesIO(primary_data)) as img:
-                        # Resize to fit the combined dimensions
-                        img_width = math.ceil(combined_image_dimensions[0])
-                        img_height = math.ceil(combined_image_dimensions[1])
-                        img = img.resize((img_width, img_height), Image.LANCZOS)
-                        output.paste(img, (0, 0))
+                    with Image.open(io.BytesIO(primary_data)) as img1:
+                        # Apply EXIF orientation
+                        img1 = self._apply_exif_orientation(img1)
+                        
+                        # Get original dimensions
+                        orig_width, orig_height = img1.size
+                        
+                        # Calculate target dimensions while maintaining aspect ratio
+                        target_width = math.ceil(combined_image_dimensions[0])
+                        target_height = math.ceil(combined_image_dimensions[1])
+                        
+                        # Resize and crop to fit the combined dimensions (maintain aspect ratio)
+                        img1 = self._resize_and_crop_image(img1, target_width, target_height)
+                        output.paste(img1, (0, 0))
                     
                     # Process secondary image
-                    with Image.open(io.BytesIO(secondary_data)) as img:
-                        # Resize to fit the combined dimensions
-                        img_width = math.ceil(combined_image_dimensions[0])
-                        img_height = math.ceil(combined_image_dimensions[1])
-                        img = img.resize((img_width, img_height), Image.LANCZOS)
+                    with Image.open(io.BytesIO(secondary_data)) as img2:
+                        # Apply EXIF orientation
+                        img2 = self._apply_exif_orientation(img2)
+                        
+                        # Get original dimensions
+                        orig_width, orig_height = img2.size
+                        
+                        # Calculate target dimensions while maintaining aspect ratio
+                        target_width = math.ceil(combined_image_dimensions[0])
+                        target_height = math.ceil(combined_image_dimensions[1])
+                        
+                        # Resize and crop to fit the combined dimensions (maintain aspect ratio)
+                        img2 = self._resize_and_crop_image(img2, target_width, target_height)
                         
                         # Position the second image
                         if combined_image_dimensions[0] < requested_dimensions[0]:
                             # Side by side
-                            output.paste(img, (math.floor(combined_image_dimensions[0]), 0))
+                            output.paste(img2, (math.floor(combined_image_dimensions[0]), 0))
                         else:
                             # One above the other
-                            output.paste(img, (0, math.floor(combined_image_dimensions[1])))
+                            output.paste(img2, (0, math.floor(combined_image_dimensions[1])))
                     
                     # Save the combined image
                     with io.BytesIO() as result:
@@ -466,6 +487,9 @@ class Coordinator(DataUpdateCoordinator):
         
     def _resize_and_crop_image(self, img, target_width, target_height):
         """Resize and crop the image to fill the target dimensions."""
+        # Apply EXIF orientation
+        img = self._apply_exif_orientation(img)
+        
         # Get original dimensions
         original_width, original_height = img.size
         
@@ -497,6 +521,9 @@ class Coordinator(DataUpdateCoordinator):
     
     def _resize_to_fit(self, img, target_width, target_height):
         """Resize the image to fit within the target dimensions while maintaining aspect ratio."""
+        # Apply EXIF orientation
+        img = self._apply_exif_orientation(img)
+        
         # Get original dimensions
         original_width, original_height = img.size
         
@@ -527,6 +554,37 @@ class Coordinator(DataUpdateCoordinator):
         
         return canvas
 
+    def _apply_exif_orientation(self, img):
+        """Apply the EXIF orientation to the image."""
+        try:
+            # Check if the image has EXIF data
+            if hasattr(img, '_getexif') and img._getexif() is not None:
+                exif = dict(img._getexif().items())
+                orientation = exif.get(0x0112, 1)  # 0x0112 is the orientation tag
+                
+                # Apply the appropriate rotation/flip based on EXIF orientation
+                if orientation == 1:  # Normal
+                    return img
+                elif orientation == 2:  # Mirrored horizontally
+                    return img.transpose(Image.FLIP_LEFT_RIGHT)
+                elif orientation == 3:  # Rotated 180 degrees
+                    return img.transpose(Image.ROTATE_180)
+                elif orientation == 4:  # Mirrored vertically
+                    return img.transpose(Image.FLIP_TOP_BOTTOM)
+                elif orientation == 5:  # Mirrored horizontally and rotated 90 degrees counter-clockwise
+                    return img.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
+                elif orientation == 6:  # Rotated 90 degrees counter-clockwise
+                    return img.transpose(Image.ROTATE_270)
+                elif orientation == 7:  # Mirrored horizontally and rotated 90 degrees clockwise
+                    return img.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_270)
+                elif orientation == 8:  # Rotated 90 degrees clockwise
+                    return img.transpose(Image.ROTATE_90)
+        except Exception as err:
+            _LOGGER.debug("Error applying EXIF orientation: %s", err)
+        
+        # Return the original image if there's no EXIF data or if there was an error
+        return img
+    
     async def _get_media_dimensions(
         self, media: MediaItem | None = None
     ) -> Tuple[float, float] | None:
@@ -539,6 +597,8 @@ class Coordinator(DataUpdateCoordinator):
             # Define a function to run in the executor
             def get_dimensions():
                 with Image.open(media.path) as img:
+                    # Apply EXIF orientation to get the correct dimensions
+                    img = self._apply_exif_orientation(img)
                     return img.size
                     
             # Run the file operation in a separate thread
