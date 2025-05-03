@@ -211,6 +211,10 @@ class LocalPhotosManager:
 
         # Update the media count for the album
         album.media_items_count = len(media_items)
+        
+        # Sort media items alphabetically by filename
+        media_items.sort(key=lambda item: item.filename.lower())
+        
         return media_items
 
     async def get_media_item(self, album_id: str, media_id: str) -> Optional[MediaItem]:
@@ -229,7 +233,7 @@ class LocalPhotosManager:
         return random.choice(media_items)
 
     async def get_next_media_item(self, album_id: str, current_media_id: str) -> Optional[MediaItem]:
-        """Get the next media item in album order."""
+        """Get the next media item in alphabetical order."""
         media_items = await self.get_media_items(album_id)
         if not media_items:
             return None

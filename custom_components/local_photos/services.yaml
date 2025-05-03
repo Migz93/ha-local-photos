@@ -16,4 +16,4 @@ next_media:
         select:
           options:
             - "Random"
-            - "Album order"
+            - "Alphabetical order"

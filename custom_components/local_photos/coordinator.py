@@ -33,7 +33,7 @@ from .const import (
     SETTING_CROP_MODE_COMBINED,
     SETTING_CROP_MODE_CROP,
     SETTING_CROP_MODE_DEFAULT_OPTION,
-    SETTING_IMAGESELECTION_MODE_ALBUM_ORDER,
+    SETTING_IMAGESELECTION_MODE_ALPHABETICAL,
     SETTING_IMAGESELECTION_MODE_DEFAULT_OPTION,
     SETTING_INTERVAL_DEFAULT_OPTION,
     SETTING_INTERVAL_MAP,
@@ -237,7 +237,7 @@ class Coordinator(DataUpdateCoordinator):
     async def select_next(self, mode=None):
         """Select next media based on config"""
         mode = mode or self.image_selection_mode
-        if mode.lower() == SETTING_IMAGESELECTION_MODE_ALBUM_ORDER.lower():
+        if mode.lower() == SETTING_IMAGESELECTION_MODE_ALPHABETICAL.lower():
             await self._select_sequential_media()
         else:
             await self._select_random_media()
@@ -254,7 +254,7 @@ class Coordinator(DataUpdateCoordinator):
             _LOGGER.error("Error selecting random media: %s", err)
 
     async def _select_sequential_media(self):
-        """Finds the current photo in the list, and moves to the next"""
+        """Finds the current photo in the alphabetically sorted list, and moves to the next"""
         try:
             current_media_id = self.current_media_id()
             media = await self._photos_manager.get_next_media_item(self.album_id, current_media_id)

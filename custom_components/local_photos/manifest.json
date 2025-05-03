@@ -2,12 +2,12 @@
   "domain": "local_photos",
   "name": "Local Photos",
   "codeowners": [
-    "@Daanoz"
+    "@Migz93"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/daanoz/ha-local-photos",
+  "documentation": "https://github.com/migz93/ha-local-photos",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/daanoz/ha-local-photos/issues",
+  "issue_tracker": "https://github.com/migz93/ha-local-photos/issues",
   "requirements": [
     "pillow"
   ],
