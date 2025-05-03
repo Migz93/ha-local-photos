@@ -1,16 +1,12 @@
-"""Constants for Google Photos."""
+"""Constants for Local Photos."""
 from __future__ import annotations
 
-DOMAIN = "google_photos"
-MANUFACTURER = "Google, Inc."
-DATA_AUTH = "auth"
-DEFAULT_ACCESS = [
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/photoslibrary.readonly",
-]
+DOMAIN = "local_photos"
+MANUFACTURER = "Local Photos"
 
-CONF_ALBUM_ID = "album_id"
-CONF_ALBUM_ID_FAVORITES = "FAVORITES"
+CONF_FOLDER_PATH = "folder_path"
+CONF_ALBUM_ID = "album_id"  # Kept for compatibility
+CONF_ALBUM_ID_FAVORITES = "ALL"  # Renamed from FAVORITES to ALL
 
 SETTING_IMAGESELECTION_MODE_RANDOM = "Random"
 SETTING_IMAGESELECTION_MODE_ALBUM_ORDER = "Album order"

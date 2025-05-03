@@ -1,4 +1,4 @@
-"""Support for Google Photos Albums."""
+"""Support for Local Photos Albums."""
 from __future__ import annotations
 import logging
 
@@ -38,7 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Set up the Google Photos camera."""
+    """Set up the Local Photos camera."""
     entry_data = hass.data[DOMAIN][entry.entry_id]
     coordinator_manager: CoordinatorManager = entry_data.get("coordinator_manager")
 
@@ -46,7 +46,7 @@ async def async_setup_entry(
     entities = []
     for album_id in album_ids:
         coordinator = await coordinator_manager.get_coordinator(album_id)
-        entities.append(GooglePhotosAlbumCamera(coordinator))
+        entities.append(LocalPhotosAlbumCamera(coordinator))
 
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
@@ -61,15 +61,15 @@ async def async_setup_entry(
     )
 
 
-class GooglePhotosBaseCamera(Camera):
-    """Base class Google Photos Camera class. Implements methods from CoordinatorEntity"""
+class LocalPhotosBaseCamera(Camera):
+    """Base class Local Photos Camera class. Implements methods from CoordinatorEntity"""
 
     coordinator: Coordinator
     _attr_has_entity_name = True
     _attr_icon = "mdi:image"
 
     def __init__(self, coordinator: Coordinator) -> None:
-        """Initialize a Google Photos Base Camera class."""
+        """Initialize a Local Photos Base Camera class."""
         super().__init__()
         self.coordinator = coordinator
         self.entity_description = CAMERA_TYPE
@@ -116,32 +116,26 @@ class GooglePhotosBaseCamera(Camera):
         )
         media = self.coordinator.current_media
         media_secondary = self.coordinator.current_secondary_media
-        if write_metadata:
-            self._attr_extra_state_attributes["media_filename"] = (
-                media.get("filename") or ""
-            )
-            self._attr_extra_state_attributes["media_metadata"] = (
-                media.get("mediaMetadata") or {}
-            )
-            self._attr_extra_state_attributes["media_contributor_info"] = (
-                media.get("contributorInfo") or {}
-            )
-            self._attr_extra_state_attributes["media_url"] = (
-                media.get("productUrl") or {}
-            )
+        if write_metadata and media is not None:
+            self._attr_extra_state_attributes["media_filename"] = media.filename
+            
+            # MediaItem objects don't have these properties from Google Photos API
+            # So we'll just provide basic information
+            self._attr_extra_state_attributes["media_metadata"] = {
+                "path": media.path,
+                "id": media.id
+            }
+            self._attr_extra_state_attributes["media_contributor_info"] = {}
+            self._attr_extra_state_attributes["media_url"] = ""
+            
             if media_secondary is not None:
-                self._attr_extra_state_attributes["secondary_media_filename"] = (
-                    media_secondary.get("filename") or ""
-                )
-                self._attr_extra_state_attributes["secondary_media_metadata"] = (
-                    media_secondary.get("mediaMetadata") or {}
-                )
-                self._attr_extra_state_attributes["secondary_media_contributor_info"] = (
-                    media_secondary.get("contributorInfo") or {}
-                )
-                self._attr_extra_state_attributes["secondary_media_url"] = (
-                    media_secondary.get("productUrl") or {}
-                )
+                self._attr_extra_state_attributes["secondary_media_filename"] = media_secondary.filename
+                self._attr_extra_state_attributes["secondary_media_metadata"] = {
+                    "path": media_secondary.path,
+                    "id": media_secondary.id
+                }
+                self._attr_extra_state_attributes["secondary_media_contributor_info"] = {}
+                self._attr_extra_state_attributes["secondary_media_url"] = ""
             else:
                 self._attr_extra_state_attributes.pop("secondary_media_filename", None)
                 self._attr_extra_state_attributes.pop("secondary_media_metadata", None)
@@ -165,13 +159,13 @@ class GooglePhotosBaseCamera(Camera):
         return await self.coordinator.get_media_data(width, height)
 
 
-class GooglePhotosAlbumCamera(GooglePhotosBaseCamera):
-    """Representation of a Google Photos Album camera."""
+class LocalPhotosAlbumCamera(LocalPhotosBaseCamera):
+    """Representation of a Local Photos Album camera."""
 
     def __init__(self, coordinator: Coordinator) -> None:
-        """Initialize a Google Photos album."""
+        """Initialize a Local Photos album."""
         super().__init__(coordinator)
         self._attr_name = "Media"
-        album_id = self.coordinator.album["id"]
+        album_id = self.coordinator.album.id
         self._attr_unique_id = f"{album_id}-media"
         self._attr_device_info = self.coordinator.get_device_info()

@@ -1,0 +1,15 @@
+{
+  "domain": "local_photos",
+  "name": "Local Photos",
+  "codeowners": [
+    "@Daanoz"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/daanoz/ha-local-photos",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/daanoz/ha-local-photos/issues",
+  "requirements": [
+    "pillow"
+  ],
+  "version": "v0.0.0"
+}

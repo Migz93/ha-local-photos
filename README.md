@@ -1,7 +1,7 @@
-# Google Photos Integration for Home Assistant
+# Local Photos Integration for Home Assistant
 
-> [!WARNING]
-> This integration will be deprecated on March 31, 2025 due to Google Photo API changes, [read more](https://github.com/Daanoz/ha-google-photos/issues/64).
+> [!NOTE]
+> This integration is a refactored version of the Google Photos integration, modified to work with local photos instead of the Google Photos API.
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -14,7 +14,7 @@
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
-This integration allows you to add albums from your Google Photos account as a `camera` entity to your Home Assistant setup. The entity will be showing media from your Google Photo album so you can add some personalization to your dashboards.
+This integration allows you to add local photo albums from your Home Assistant `/config/www/photos` directory as a `camera` entity to your setup. The entity will be showing media from your local photo albums so you can add some personalization to your dashboards without relying on external services.
 
 **This component will set up the following platforms.**
 
@@ -35,57 +35,40 @@ Platform | Name | Description
 ## Installation
 
 ### HACS (Once available)
-1. Find the integration as `Google Photos`
+1. Find the integration as `Local Photos`
 1. Click install.
 1. Restart Home Assistant.
 
 ### Manual
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 1. If you do not have a `custom_components` directory (folder) there, you need to create it.
-1. In the `custom_components` directory (folder) create a new folder called `google_photos`.
-1. Download _all_ the files from the `custom_components/google_photos/` directory (folder) in this repository.
+1. In the `custom_components` directory (folder) create a new folder called `local_photos`.
+1. Download _all_ the files from the `custom_components/local_photos/` directory (folder) in this repository.
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
 
 ## Configuration
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Google Photos".
-1. Generate a Client ID and Client Secret on Google Developers Console. The authentication procedure in this integration is based of the [Google Mail](https://next.home-assistant.io/integrations/google_mail/) integration.
-    1. First, go to the Google Developers Console to enable [Photos Library API](https://console.cloud.google.com/apis/library/photoslibrary.googleapis.com)
-    1. The wizard will ask you to choose a project to manage your application. Select a project and click continue.
-    1. Verify that your Photos Library API was enabled and click ‘Go to credentials’
-    1. Navigate to APIs & Services (left sidebar) > [Credentials](https://console.cloud.google.com/apis/credentials)
-    1. Click on the field on the left of the screen, OAuth Consent Screen.
-    1. Select External and Create.
-    1. Set the App Name (the name of the application asking for consent) to anything you want, e.g., Home Assistant.
-    1. You then need to select a Support email. To do this, click the drop-down box and select your email address.
-    1. You finally need to complete the section: Developer contact information. To do this, enter your email address (the same as above is fine).
-    1. Scroll to the bottom and click Save and Continue. You don’t have to fill out anything else, or it may enable additional review.
-    1. You will then be automatically taken to the Scopes page. You do not need to add any scopes here, so click Save and Continue to move to the Optional info page. You do not need to add anything to the Optional info page, so click Save and Continue, which will take you to the Summary page. Click Back to Dashboard.
-    1. Click OAuth consent screen again and set Publish Status to Production otherwise your credentials will expire every 7 days.
-    1. Make sure Publishing status is set to production.
-    1. Click Credentials in the menu on the left-hand side of the screen, then click Create credentials (at the top of the screen), then select OAuth client ID.
-    1. Set the Application type to Web application and give this credential set a name (like “Home Assistant Credentials”).
-    1. Add [https://my.home-assistant.io/redirect/oauth](https://my.home-assistant.io/redirect/oauth) to Authorized redirect URIs then click Create.
-    1/ You will then be presented with a pop-up saying OAuth client created showing Your Client ID and Your Client Secret. Make a note of these (for example, copy and paste them into a text editor), as you will need these shortly. Once you have noted these strings, click OK. If you need to find these credentials again at any point, then navigate to APIs & Services > Credentials, and you will see Home Assistant Credentials (or whatever you named them in the previous step) under OAuth 2.0 Client IDs. To view both the Client ID and Client secret, click on the pencil icon; this will take you to the settings page for these credentials, and the information will be on the right-hand side of the page.
-    1. Double-check that the Photos Library API has been automatically enabled. To do this, select Library from the menu, then search for Photos Library API. If it is enabled you will see API Enabled with a green tick next to it. If it is not enabled, then enable it.
-1. Provide the integration with a client id and client secret to use with th Google Photos Library api. If you want to change the credentials, go to [![Open your Home Assistant instance and Manage your application credentials.](https://my.home-assistant.io/badges/application_credentials.svg)](https://my.home-assistant.io/redirect/application_credentials/).
-1. Continue through the steps of selecting the account you want to authorize.
-1. **NOTE**: You may get a message telling you that the app has not been verified and you will need to acknowledge that in order to proceed.
-1. You can now see the details of what you are authorizing Home Assistant to access with two options at the bottom. Click **Continue**.
-1. The page will now display *Link account to Home Assistant?*, note Your instance URL. If this is not correct, please refer to [My Home Assistant](https://next.home-assistant.io/integrations/my). If everything looks good, click **Link Account**.
-1. You may close the window, and return back to Home Assistant where you should see a Success! message from Home Assistant.
+1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Local Photos".
+2. Click on the integration and follow the setup process.
+3. The integration will create a `/config/www/photos` directory if it doesn't already exist. This is where you'll store your photos.
 
-After the setup is complete a device will be created with entity for your favorite photos. To add more albums from you account, click configure on the integration card.
+### Adding Photos
 
-### Example setup
+1. Place your photos in the `/config/www/photos` directory. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
+2. You can organize photos into albums by creating subdirectories in the `/config/www/photos` directory. For example:
+   - `/config/www/photos/vacation/` - For vacation photos
+   - `/config/www/photos/family/` - For family photos
+   - `/config/www/photos/holidays/` - For holiday photos
+3. The integration will automatically detect these directories as albums.
+4. Supported image formats include: JPG, JPEG, PNG, GIF, BMP, and WEBP.
 
-Screenshots:
-- [OAuth consent screen setup](/docs/OAuthConsentOverview.png)
-- [OAuth consent screen edit, step1](/docs/OAuthConsent1.png)
-- [OAuth consent screen edit, step2](/docs/OAuthConsent2.png)
-- [OAuth consent screen edit, step3](/docs/OAuthConsent3.png)
-- [OAuth consent screen edit, step4](/docs/OAuthConsent4.png)
-- [Credentials](/docs/Credentials.png)
+### Adding Albums to Home Assistant
+
+1. After adding photos to your directories, go to the Local Photos integration card in Home Assistant.
+2. Click "Configure" on the integration card.
+3. Select "Album Select" from the menu.
+4. Choose the album you want to add from the dropdown menu and click "Submit".
+5. The album will now be available as a camera entity in Home Assistant.
 
 ## Crop modes
 
@@ -166,26 +149,32 @@ data:
 
 ## FAQ
 
-### How can I change my credentials? / I entered the wrong credentials now what?
+### How do I add new photos to my albums?
 
-Go to [![Open your Home Assistant instance and Manage your application credentials.](https://my.home-assistant.io/badges/application_credentials.svg)](https://my.home-assistant.io/redirect/application_credentials/) (or click the 3 dot menu on the integrations screen), here you can delete the credentials, the setup flow will ask for new credentials again when setting up the integration.
+Simply add new image files to the appropriate directories in your `/config/www/photos` folder. The integration will automatically detect new photos the next time it refreshes. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
 
-### Why is it always loading the same image after loading the integration?
+### Why aren't my photos showing up in the integration?
 
-This is the cover photo of you album, you can change it in Google Photos, or trigger a `next_media` on the service after start-up.
+Check that your photos are in the correct directory (`/config/www/photos` or a subdirectory) and that they are in a supported format (JPG, JPEG, PNG, GIF, BMP, or WEBP). Also, make sure the files aren't too large - the integration has a 20MB file size limit for images.
+
+### Can I use this integration offline?
+
+Yes! That's one of the main benefits of this integration compared to the original Google Photos integration. Since all photos are stored locally, this integration works completely offline without any external API dependencies.
 
 ## Notes / Remarks / Limitations
 
-- Currently the album media list is cached for 3 hours.
-- Directly after loading the integration / starting HA, the album will only contain 100 items. This is done to reduce server load on the Google Photos servers, every 30 seconds a new batch of media is requested.
+- The integration scans the photo directories when you add an album, so if you add many new photos, you may need to restart Home Assistant or reconfigure the album to see them.
+- Very large images (>20MB) are skipped to prevent performance issues.
+- For best performance, keep your photo collection reasonably sized. Having thousands of high-resolution photos may impact performance.
 
 ## Future plans
-- Give end user more control over album cache time
 - Support for videos
-- Support loading media using [content categories](https://developers.google.com/photos/library/guides/apply-filters#content-categories)
-- Support loading media filtered by date/time
-- Custom photo carousel fronted component
-- Add trigger on new media
+- Support for filtering images by file name or metadata
+- Support for filtering images by date/time
+- Custom photo carousel frontend component
+- Add trigger on new media detection
+- Add ability to rotate images
+- Add support for image metadata extraction (EXIF data)
 
 ## Debug Logging
 To enable debug log, add the following lines to your configuration.yaml and restart your HomeAssistant.

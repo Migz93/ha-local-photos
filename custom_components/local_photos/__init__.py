@@ -1,25 +1,18 @@
-"""Support for Google Photos."""
+"""Support for Local Photos."""
 from __future__ import annotations
 
 import logging
-from aiohttp.client_exceptions import ClientError, ClientResponseError
+import os
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import  issue_registry
+from homeassistant.helpers import issue_registry
 from homeassistant.helpers.device_registry import DeviceEntry
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.config_entry_oauth2_flow import (
-    OAuth2Session,
-    async_get_config_entry_implementation,
-)
+from homeassistant.exceptions import ConfigEntryNotReady
 
-from custom_components.google_photos.coordinator import CoordinatorManager
-
-from .api import AsyncConfigEntryAuth
-from .const import CONF_ALBUM_ID, DOMAIN
+from .coordinator import CoordinatorManager
+from .const import CONF_ALBUM_ID, CONF_FOLDER_PATH, DOMAIN
 
 PLATFORMS = [Platform.CAMERA, Platform.SENSOR, Platform.SELECT]
 _LOGGER = logging.getLogger(__name__)
@@ -39,37 +32,26 @@ async def async_migrate_entry(_, config_entry: ConfigEntry):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Google Photos from a config entry."""
-
-    issue_registry.async_create_issue(
-        hass,
-        DOMAIN,
-        issue_id="integration_deprecation",
-        breaks_in_ha_version="2025.3",
-        is_fixable=False,
-        is_persistent=True,
-        severity=issue_registry.IssueSeverity.WARNING,
-        learn_more_url="https://github.com/Daanoz/ha-google-photos/issues/64",
-        translation_key="integration_deprecation",
-    )
-
-    implementation = await async_get_config_entry_implementation(hass, entry)
-    session = OAuth2Session(hass, entry, implementation)
-    auth = AsyncConfigEntryAuth(async_get_clientsession(hass), session)
-    try:
-        await auth.check_and_refresh_token()
-    except ClientResponseError as err:
-        if 400 <= err.status < 500:
-            raise ConfigEntryAuthFailed(
-                "OAuth session is not valid, reauth required"
-            ) from err
-        raise ConfigEntryNotReady from err
-    except ClientError as err:
-        raise ConfigEntryNotReady from err
+    """Set up Local Photos from a config entry."""
+    
+    # Ensure the photos directory exists
+    photos_dir = os.path.join(hass.config.config_dir, "www", "photos")
+    if not os.path.exists(photos_dir):
+        try:
+            os.makedirs(photos_dir)
+            _LOGGER.info("Created photos directory: %s", photos_dir)
+        except Exception as err:
+            _LOGGER.error("Error creating photos directory: %s", err)
+            raise ConfigEntryNotReady from err
+    
+    # Initialize the coordinator manager
+    coordinator_manager = CoordinatorManager(hass, entry)
+    # Initialize the coordinator manager asynchronously
+    await coordinator_manager.initialize()
+    
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = dict(
         {
-            "auth": auth,
-            "coordinator_manager": CoordinatorManager(hass, entry, auth),
+            "coordinator_manager": coordinator_manager,
             "loaded_options": {**entry.options},
         }
     )
