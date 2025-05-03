@@ -119,7 +119,7 @@ class LocalPhotosBaseCamera(Camera):
         if write_metadata and media is not None:
             self._attr_extra_state_attributes["media_filename"] = media.filename
             
-            # MediaItem objects don't have these properties from Google Photos API
+            # MediaItem objects only have basic properties (no extended metadata)
             # So we'll just provide basic information
             self._attr_extra_state_attributes["media_metadata"] = {
                 "path": media.path,

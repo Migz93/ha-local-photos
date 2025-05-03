@@ -3,7 +3,7 @@ next_media:
   description: Load next media from album
   target:
     entity:
-      integration: google_photos
+      integration: local_photos
       domain: camera
   fields:
     mode:

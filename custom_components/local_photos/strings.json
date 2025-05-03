@@ -6,10 +6,10 @@
       },
       "reauth_confirm": {
         "title": "[%key:common::config_flow::title::reauth%]",
-        "description": "The Google Photos integration needs to re-authenticate your account"
+        "description": "The Local Photos integration needs to be reconfigured"
       },
       "auth": {
-        "title": "Link Google Account"
+        "title": "Configure Local Photos"
       }
     },
     "abort": {
@@ -35,7 +35,7 @@
           "albumselect": "Select album",
           "settings": "Settings"
         },
-        "title": "Adjust Google Photos options"
+        "title": "Adjust Local Photos options"
       },
       "albumselect": {
         "data": {
@@ -48,18 +48,18 @@
         "data": {
           "attribute_metadata": "Write metadata to attributes"
         },
-        "description": "Adjust Google Photos options.",
+        "description": "Adjust Local Photos options.",
         "title": "Settings"
       }
     }
   },
   "application_credentials": {
-    "description": "Follow the [instructions]({more_info_url}) for [OAuth consent screen]({oauth_consent_url}) to give Home Assistant access to your Google Photos. You also need to create Application Credentials linked to your account:\n1. Go to [Credentials]({oauth_creds_url}) and click **Create Credentials**.\n1. From the drop-down list select **OAuth client ID**.\n1. Select **Web application** for the Application Type.\n\n"
+    "description": "Local Photos integration allows you to display photos from your local storage in Home Assistant. Place your photos in the /config/www/photos directory, with each album in its own subdirectory."
   },
   "issues": {
     "integration_deprecation": {
-      "title": "Google Photos integration deprecated on March 31, 2025",
-      "description": "Due to changes in the Google Photo's API, this (custom) Google Photos integration will be deprecated on March 31, 2025. Starting from HA 2024.10 there is an official Google Photos integration that incorporates the new API."
+      "title": "Local Photos integration information",
+      "description": "This integration displays photos from your local storage. Place your photos in the /config/www/photos directory, with each album in its own subdirectory."
     }
   }
 }
