@@ -1,9 +1,9 @@
 {
-    "name": "Google Photos",
-    "hacs": "1.6.0",
-    "homeassistant": "2022.6.0",
+    "name": "Local Photos",
+    "hacs": "1.0.0",
+    "homeassistant": "2025.4.4",
     "render_readme": true,
     "zip_release": true,
-    "filename": "google_photos.zip",
+    "filename": "local_photos.zip",
     "hide_default_branch": true
 }

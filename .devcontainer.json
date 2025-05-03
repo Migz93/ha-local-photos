@@ -1,5 +1,5 @@
 {
-    "name": "daanoz/ha_google_photos",
+    "name": "migz93/ha_local_photos",
     "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12-bullseye",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [

@@ -33,7 +33,7 @@ A clear and concise description of what the bug is.
 
 ## Debug log
 
-<!-- To enable debug logs check this https://github.com/Daanoz/ha-google-photos#debug-logging -->
+<!-- To enable debug logs check this https://github.com/Migz93/ha-local-photos#debug-logging -->
 
 ```text
 

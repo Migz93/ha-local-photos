@@ -15,13 +15,13 @@ jobs:
 
       - name: Patch manifest and zip
         run: |
-          sed -i 's/v0.0.0/${{ steps.version.outputs.version }}/' custom_components/google_photos/manifest.json
+          sed -i 's/v0.0.0/${{ steps.version.outputs.version }}/' custom_components/local_photos/manifest.json
 
-          cd custom_components/google_photos/
-          zip ../../google_photos.zip ./* translations/* -x '.*'
+          cd custom_components/local_photos/
+          zip ../../local_photos.zip ./* translations/* -x '.*'
       - uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: google_photos.zip
+          file: local_photos.zip
           tag: ${{ github.ref }}
           overwrite: true
