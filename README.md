@@ -1,15 +1,11 @@
 # Local Photos Integration for Home Assistant
 
-> [!NOTE]
-> This integration is a refactored version of the Google Photos integration, modified to work with local photos instead of the Google Photos API.
-
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]][license]
 
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
@@ -22,10 +18,10 @@ For each selected album:
 
 Platform | Name | Description
 -- | --  | --
-`camera` | `media` | An image from the Google Photos Album.
+`camera` | `media` | An image from the Local Photos Album.
 `sensor` | `filename` | Filename of the currently selected media item.
 `sensor` | `creation_timestamp` | Timestamp of the currently selected media item.
-`sensor` | `media_count` | Counter showing the number of media items in the album (photo + video). It could take a while to populate all media items, to check if the integration is still loading an attribute `is_updating` is available.
+`sensor` | `media_count` | Counter showing the number of media items in the album (photo + video).
 `select` | `image_selection_mode` | Configuration setting on how to pick the next image.
 `select` | `crop_mode` | Configuration setting on how to crop the image, either `Original`, `Crop` or `Combine images` [(explanation)](#crop-modes).
 `select` | `update_interval` | Configuration setting on how often to update the image, if you have a lot of albums running on your instance it is adviseable to not set this to low.
@@ -34,7 +30,7 @@ Platform | Name | Description
 
 ## Installation
 
-### HACS (Once available)
+### HACS (Not Currently In HACS)
 1. Find the integration as `Local Photos`
 1. Click install.
 1. Restart Home Assistant.
@@ -93,15 +89,15 @@ show_state: false
 show_name: false
 camera_view: auto
 type: picture-entity
-entity: camera.google_photos_library_favorites
+entity: camera.local_photos_photos_media
 aspect_ratio: '1:1'
 tap_action:
   action: call-service
-  service: google_photos.next_media
+  service: local_photos.next_media
   data:
     mode: RANDOM
   target:
-    entity_id: camera.google_photos_library_favorites
+    entity_id: camera.local_photos_photos_media
 ```
 
 ### Lovelace wall panel
@@ -116,36 +112,35 @@ wallpanel:
   hide_sidebar: true
   fullscreen: true
   image_fit: cover
-  image_url: media-entity://camera.google_photos_favorites_media,
+  image_url: media-entity://camera.local_photos_photos_media,
   cards:
       # Note: For this markdown card to work you need to enable write metadata in the integration settings.
     - type: markdown
-      content: >-
-        {{states.camera.google_photos_favorites_media.attributes.media_metadata.photo.cameraMake}},
-        {{states.camera.google_photos_favorites_media.attributes.media_metadata.photo.cameraModel}}
+      content: >
+        {{states.camera.local_photos_photos_media.attributes.media_metadata.path}}
 ```
 
 **Important** Make sure to align the image crop modes with the configuration of the wall panel, if not set correctly images might appear blurry. For crop mode [original](#original), set the `image_fit` property to `contain`.
 
 ## Service
 
-It is possible to control the album using the service exposed by `google_photos`.
+It is possible to control the album using the service exposed by `local_photos`.
 
 ### Go to next media
 
 #### Example
 ```
-service: google_photos.next_media
+service: local_photos.next_media
 data:
-  entity_id: camera.google_photos_library_favorites
+  entity_id: camera.local_photos_photos_media
   mode: Random
 ```
 
 #### Key Descriptions
 | Key | Required | Default | Description |
 | --- | --- | --- | --- |
-| entity_id | Yes | | Entity name of a Google Photo album camera. |
-| mode | No | `Random` | Selection mode next image, either `Random` or `Album order` |
+| entity_id | Yes | | Entity name of a Local Photos album camera. |
+| mode | No | `Random` | Selection mode next image, either `Random` or `Alphabetical order` |
 
 ## FAQ
 
@@ -157,9 +152,6 @@ Simply add new image files to the appropriate directories in your `/config/www/p
 
 Check that your photos are in the correct directory (`/config/www/photos` or a subdirectory) and that they are in a supported format (JPG, JPEG, PNG, GIF, BMP, or WEBP). Also, make sure the files aren't too large - the integration has a 20MB file size limit for images.
 
-### Can I use this integration offline?
-
-Yes! That's one of the main benefits of this integration compared to the original Google Photos integration. Since all photos are stored locally, this integration works completely offline without any external API dependencies.
 
 ## Notes / Remarks / Limitations
 
@@ -167,14 +159,7 @@ Yes! That's one of the main benefits of this integration compared to the origina
 - Very large images (>20MB) are skipped to prevent performance issues.
 - For best performance, keep your photo collection reasonably sized. Having thousands of high-resolution photos may impact performance.
 
-## Future plans
-- Support for videos
-- Support for filtering images by file name or metadata
-- Support for filtering images by date/time
-- Custom photo carousel frontend component
-- Add trigger on new media detection
-- Add ability to rotate images
-- Add support for image metadata extraction (EXIF data)
+
 
 ## Debug Logging
 To enable debug log, add the following lines to your configuration.yaml and restart your HomeAssistant.
@@ -183,32 +168,38 @@ To enable debug log, add the following lines to your configuration.yaml and rest
 logger:
   default: info
   logs:
-    custom_components.google_photos: debug
-    googleapiclient: debug
+    custom_components.local_photos: debug
 ```
 
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
+## Origin
+
+This integration is a refactored version of the [Google Photos integration](https://github.com/Daanoz/ha-google-photos), modified to work with local photos instead of the Google Photos API as I really enjoyed the "Combine" mode of displaying photos.
+
+The refactoring was done using AI assistance with Windsurf IDE, so while it has been tested, there may still be some issues to resolve.
+
 <!---->
+
 
 ***
 
-[buymecoffee]: https://www.buymeacoffee.com/Daanoz
+[buymecoffee]: https://www.buymeacoffee.com/Migz93
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/daanoz/ha-google-photos.svg?style=for-the-badge
-[commits]: https://github.com/daanoz/ha-google-photos/commits/master
+[commits-shield]: https://img.shields.io/github/commit-activity/y/migz93/ha-local-photos.svg?style=for-the-badge
+[commits]: https://github.com/migz93/ha-local-photos/commits/master
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [discord]: https://discord.com/invite/home-assistant
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
-[exampleimg]: https://raw.githubusercontent.com/daanoz/ha-google-photos/main/example.png
+[exampleimg]: https://raw.githubusercontent.com/migz93/ha-local-photos/main/example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license]: https://github.com/daanoz/ha-google-photos/blob/main/LICENSE
+[license]: https://github.com/migz93/ha-local-photos/blob/main/LICENSE
 [license-shield]: https://img.shields.io/github/license/custom-components/integration_blueprint.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-Daan%20Sieben%20%40Daanoz-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/daanoz/ha-google-photos.svg?style=for-the-badge
-[releases]: https://github.com/daanoz/ha-google-photos/releases
-[user_profile]: https://github.com/daanoz
+[maintenance-shield]: https://img.shields.io/badge/maintainer-Migz93-blue.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/migz93/ha-local-photos.svg?style=for-the-badge
+[releases]: https://github.com/migz93/ha-local-photos/releases
+[user_profile]: https://github.com/migz93

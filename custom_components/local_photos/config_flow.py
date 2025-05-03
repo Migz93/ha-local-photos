@@ -73,7 +73,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Return album selection form"""
         # Scan the photos directory for subdirectories to use as albums
         photos_dir = os.path.join(self.hass.config.config_dir, "www", "photos")
-        album_selection = {CONF_ALBUM_ID_FAVORITES: "All Photos"}
+        album_selection = {CONF_ALBUM_ID_FAVORITES: "Photos"}
         
         try:
             # Define a function to run in the executor

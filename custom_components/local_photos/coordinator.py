@@ -161,7 +161,7 @@ class Coordinator(DataUpdateCoordinator):
                 )
             },
             manufacturer=MANUFACTURER,
-            name="Local Photos - " + self.album.title,
+            name=self.album.title,
             configuration_url=None,
         )
 
