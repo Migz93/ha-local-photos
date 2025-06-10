@@ -22,6 +22,7 @@ Platform | Name | Description
 `select` | `image_selection_mode` | Configuration setting on how to pick the next image.
 `select` | `crop_mode` | Configuration setting on how to crop the image, either `Original`, `Crop` or `Combine images` [(explanation)](#crop-modes).
 `select` | `update_interval` | Configuration setting on how often to update the image, if you have a lot of albums running on your instance it is adviseable to not set this to low.
+`select` | `aspect_ratio` | Configuration setting for the target aspect ratio of displayed images (16:10, 16:9, 4:3, 1:1).
 
 ![example][exampleimg]
 
@@ -133,7 +134,7 @@ show_state: false
 show_name: false
 camera_view: auto
 type: picture-entity
-entity: camera.local_photos_photos
+entity: camera.local_photos_myalbum
 aspect_ratio: '1:1'
 tap_action:
   action: call-service
@@ -141,7 +142,7 @@ tap_action:
   data:
     mode: Random
   target:
-    entity_id: camera.local_photos_photos
+    entity_id: camera.local_photos_myalbum
 ```
 
 ### Lovelace wall panel
@@ -152,11 +153,11 @@ Home Assistant Dashboard configuration yaml (raw config):
 ```yaml
 wallpanel:
   enabled: true
-  image_url: media-entity://camera.local_photos_photos
+  image_url: media-entity://camera.local_photos_myalbum
   cards:
     - type: markdown
       content: >
-        {{states.camera.local_photos_photos.attributes.media_metadata.path}}
+        {{states.camera.local_photos_myalbum.attributes.media_metadata.path}}
 ```
 
 ## Service
@@ -169,7 +170,7 @@ It is possible to control the album using the service exposed by `local_photos`.
 ```
 service: local_photos.next_media
 data:
-  entity_id: camera.local_photos_photos
+  entity_id: camera.local_photos_myalbum
   mode: Random
 ```
 
