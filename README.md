@@ -3,14 +3,11 @@
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]][license]
-
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
+[![Buy me a coffee][buymecoffeebadge]][buymecoffee]
 
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
-
-This integration allows you to add local photo albums from your Home Assistant `/config/www/photos` directory as a `camera` entity to your setup. The entity will be showing media from your local photo albums so you can add some personalization to your dashboards without relying on external services.
+This integration allows you to add local photo albums from a directory of your choice as a `camera` entity to your setup. The entity will be showing media from your local photo albums so you can add some personalization to your dashboards without relying on external services.
 
 **This component will set up the following platforms.**
 
@@ -36,38 +33,34 @@ Platform | Name | Description
 1. Restart Home Assistant.
 
 ### Manual
-1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
+1. Using the tool of your choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 1. If you do not have a `custom_components` directory (folder) there, you need to create it.
 1. In the `custom_components` directory (folder) create a new folder called `local_photos`.
 1. Download _all_ the files from the `custom_components/local_photos/` directory (folder) in this repository.
 1. Place the files you downloaded in the new directory (folder) you created.
 1. Restart Home Assistant
 
-## Configuration
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Local Photos".
-2. Click on the integration and you'll be presented with a list of available albums (subdirectories) in your `/config/www/photos` directory.
-3. Select the album you want to display. If you want to display all photos, select "All Photos".
-4. The integration will create a `/config/www/photos` directory if it doesn't already exist. This is where you'll store your photos.
-5. To add another album, simply add the integration again and select a different album.
+## Configuration and Setup
 
-### Adding Photos
+### Setting Up Your Photo Directory
 
-1. Place your photos in the `/config/www/photos` directory. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
-2. You can organize photos into albums by creating subdirectories in the `/config/www/photos` directory. For example:
-   - `/config/www/photos/vacation/` - For vacation photos
-   - `/config/www/photos/family/` - For family photos
-   - `/config/www/photos/holidays/` - For holiday photos
-3. The integration will automatically detect these directories as albums.
+1. Create a directory for your photos (if it doesn't already exist). You can use any directory accessible to Home Assistant.
+2. Place your photos in this directory. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
+3. You can organize photos into albums by creating subdirectories. For example:
+   - `/config/www/images/vacation/` - For vacation photos
+   - `/config/www/images/family/` - For family photos
+   - `/config/www/images/holidays/` - For holiday photos
 4. Supported image formats include: JPG, JPEG, PNG, GIF, BMP, and WEBP.
 
 ### Adding Albums to Home Assistant
 
-1. After adding photos to your directories, go to "Configuration" -> "Integrations" and click "+".
-2. Search for and select "Local Photos".
-3. You'll be presented with a list of available albums (subdirectories) in your `/config/www/photos` directory.
-4. Select the album you want to add and click "Submit".
-5. The album will now be available as a camera entity in Home Assistant with a device name that reflects the selected album (e.g., "Local Photos Vacation").
-6. Repeat this process for each album you want to add to Home Assistant.
+1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Local Photos".
+2. Click on the integration and enter the path to your photos directory.
+3. **Important**: The directory must exist before you can proceed. The integration will not create it for you.
+4. After entering a valid directory path, you'll be presented with a list of available albums (subdirectories) in that location.
+5. Select the album you want to display. If you want to display all photos, select "All Photos".
+6. The album will now be available as a camera entity in Home Assistant with a device name that reflects the selected album (e.g., "Local Photos Vacation").
+7. To add another album, simply add the integration again and select a different album.
 
 ## Crop modes
 
@@ -149,11 +142,11 @@ data:
 
 ### How do I add new photos to my albums?
 
-Simply add new image files to the appropriate directories in your `/config/www/photos` folder. The integration will automatically detect new photos the next time it refreshes. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
+Simply add new image files to the appropriate directories in your photos folder. The integration will automatically detect new photos the next time it refreshes. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
 
 ### Why aren't my photos showing up in the integration?
 
-Check that your photos are in the correct directory (`/config/www/photos` or a subdirectory) and that they are in a supported format (JPG, JPEG, PNG, GIF, BMP, or WEBP). Also, make sure the files aren't too large - the integration has a 20MB file size limit for images.
+Check that your photos are in the correct directory (the one you specified during setup) and that they are in a supported format (JPG, JPEG, PNG, GIF, BMP, or WEBP). Also, make sure the files aren't too large - the integration has a 20MB file size limit for images.
 
 
 ## Notes / Remarks / Limitations
@@ -161,6 +154,7 @@ Check that your photos are in the correct directory (`/config/www/photos` or a s
 - The integration scans the photo directories when you add an album, so if you add many new photos, you may need to restart Home Assistant or reconfigure the album to see them.
 - Very large images (>20MB) are skipped to prevent performance issues.
 - For best performance, keep your photo collection reasonably sized. Having thousands of high-resolution photos may impact performance.
+- The directory you specify must exist before you can set up the integration. The integration will not create directories for you.
 
 
 
@@ -195,11 +189,7 @@ The refactoring was done using AI assistance with Windsurf IDE, so while it has 
 [commits]: https://github.com/migz93/ha-local-photos/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[discord]: https://discord.com/invite/home-assistant
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
 [exampleimg]: https://raw.githubusercontent.com/migz93/ha-local-photos/main/example.png
-[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/
 [license]: https://github.com/migz93/ha-local-photos/blob/main/LICENSE
 [license-shield]: https://img.shields.io/github/license/custom-components/integration_blueprint.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Migz93-blue.svg?style=for-the-badge

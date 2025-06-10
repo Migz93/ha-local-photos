@@ -11,7 +11,7 @@ import mimetypes
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_ALBUM_ID_FAVORITES
+from .const import CONF_ALBUM_ID_FAVORITES, CONF_FOLDER_PATH
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -108,36 +108,41 @@ class LocalPhotosManager:
         """Initialize the local photos manager."""
         self.hass = hass
         self.config = config
-        self.base_path = os.path.join(hass.config.config_dir, "www")
+        
+        # Use the user-specified folder path if provided, otherwise use the default
+        folder_path = config.get(CONF_FOLDER_PATH)
+        if folder_path:
+            # If the path is not absolute, make it relative to the config directory
+            if not os.path.isabs(folder_path):
+                folder_path = os.path.join(hass.config.config_dir, folder_path)
+            self.photos_dir = folder_path
+        else:
+            # Fallback to the default path
+            self.photos_dir = os.path.join(hass.config.config_dir, "www", "photos")
+            
         self.albums = {}
 
     async def scan_albums(self) -> None:
         """Scan for local photo albums (folders)."""
-        photos_dir = os.path.join(self.base_path, "photos")
-        
-        # Create the photos directory if it doesn't exist
-        dir_exists = await self.hass.async_add_executor_job(os.path.exists, photos_dir)
+        # Check if the photos directory exists
+        dir_exists = await self.hass.async_add_executor_job(os.path.exists, self.photos_dir)
         if not dir_exists:
-            try:
-                await self.hass.async_add_executor_job(os.makedirs, photos_dir)
-                _LOGGER.info("Created photos directory: %s", photos_dir)
-            except Exception as ex:
-                _LOGGER.error("Error creating photos directory: %s", ex)
-                return
+            _LOGGER.error("Photos directory does not exist: %s", self.photos_dir)
+            return
 
         # Add the main "ALL" album that includes all photos
         all_album = Album(
             id=self.config.get(CONF_ALBUM_ID_FAVORITES, "ALL"),
             title="All",
-            path=photos_dir
+            path=self.photos_dir
         )
         self.albums[all_album.id] = all_album
 
         # Scan for subdirectories to use as albums
         try:
-            dir_items = await self.hass.async_add_executor_job(os.listdir, photos_dir)
+            dir_items = await self.hass.async_add_executor_job(os.listdir, self.photos_dir)
             for item in dir_items:
-                item_path = os.path.join(photos_dir, item)
+                item_path = os.path.join(self.photos_dir, item)
                 is_dir = await self.hass.async_add_executor_job(os.path.isdir, item_path)
                 if is_dir:
                     album = Album(

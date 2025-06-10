@@ -34,15 +34,20 @@ async def async_migrate_entry(_, config_entry: ConfigEntry):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Local Photos from a config entry."""
     
-    # Ensure the photos directory exists
-    photos_dir = os.path.join(hass.config.config_dir, "www", "photos")
-    if not os.path.exists(photos_dir):
-        try:
-            os.makedirs(photos_dir)
-            _LOGGER.info("Created photos directory: %s", photos_dir)
-        except Exception as err:
-            _LOGGER.error("Error creating photos directory: %s", err)
-            raise ConfigEntryNotReady from err
+    # Get the configured folder path or use the default
+    folder_path = entry.options.get(CONF_FOLDER_PATH)
+    if folder_path:
+        # If the path is not absolute, make it relative to the config directory
+        if not os.path.isabs(folder_path):
+            folder_path = os.path.join(hass.config.config_dir, folder_path)
+    else:
+        # Use the default path if not specified
+        folder_path = os.path.join(hass.config.config_dir, "www", "images")
+    
+    # Check if the photos directory exists
+    if not os.path.exists(folder_path):
+        _LOGGER.error("Photos directory does not exist: %s", folder_path)
+        raise ConfigEntryNotReady(f"Directory does not exist: {folder_path}")
     
     # Ensure metadata is always enabled
     options = dict(entry.options)

@@ -37,10 +37,54 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         if user_input is None:
+            # Show folder path input form
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_FOLDER_PATH, 
+                            default=os.path.join(self.hass.config.config_dir, "www", "images")
+                        ): str,
+                    }
+                ),
+            )
+
+        # User has entered a folder path, now show album selection
+        folder_path = user_input[CONF_FOLDER_PATH]
+        
+        # Validate the folder path
+        if not os.path.isabs(folder_path):
+            folder_path = os.path.join(self.hass.config.config_dir, folder_path)
+            
+        # Check if the directory exists
+        if not os.path.exists(folder_path):
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_FOLDER_PATH, 
+                            default=folder_path
+                        ): str,
+                    }
+                ),
+                errors={"base": "directory_not_found"}
+            )
+            
+        # Store the folder path for later use
+        self.folder_path = folder_path
+        
+        # Move to the album selection step
+        return await self.async_step_album_select()
+        
+    async def async_step_album_select(self, user_input=None):
+        """Handle the album selection step."""
+        if user_input is None:
             # Show album selection form
             album_schema = await self._get_albumselect_schema()
             return self.async_show_form(
-                step_id="user",
+                step_id="album_select",
                 data_schema=album_schema,
             )
 
@@ -53,9 +97,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             title = f"Local Photos {album_id}"
             
-        # Create options with the selected album and always enable metadata
+        # Create options with the selected album, folder path, and always enable metadata
         options = {
             CONF_ALBUM_ID: [album_id],
+            CONF_FOLDER_PATH: self.folder_path,
             CONF_WRITEMETADATA: True  # Always enable metadata
         }
 
@@ -72,8 +117,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
     async def _get_albumselect_schema(self) -> vol.Schema:
         """Return album selection form"""
-        # Scan the photos directory for subdirectories to use as albums
-        photos_dir = os.path.join(self.hass.config.config_dir, "www", "photos")
+        # Use the user-specified photos directory
+        photos_dir = self.folder_path
         album_selection = {CONF_ALBUM_ID_FAVORITES: "All Photos"}
         
         try:

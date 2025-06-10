@@ -10,7 +10,18 @@
       },
       "auth": {
         "title": "Configure Local Photos"
+      },
+      "user": {
+        "title": "Configure Local Photos Directory",
+        "description": "Enter the path to your photos directory"
+      },
+      "album_select": {
+        "title": "Select Album",
+        "description": "Choose an album from your photos directory"
       }
+    },
+    "error": {
+      "directory_not_found": "The specified directory does not exist. Please enter a valid directory path."
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
@@ -54,12 +65,12 @@
     }
   },
   "application_credentials": {
-    "description": "Local Photos integration allows you to display photos from your local storage in Home Assistant. Place your photos in the /config/www/photos directory, with each album in its own subdirectory."
+    "description": "Local Photos integration allows you to display photos from your local storage in Home Assistant. You can specify any directory accessible to Home Assistant to store your photos, with each album in its own subdirectory."
   },
   "issues": {
     "integration_deprecation": {
       "title": "Local Photos integration information",
-      "description": "This integration displays photos from your local storage. Place your photos in the /config/www/photos directory, with each album in its own subdirectory."
+      "description": "This integration displays photos from your local storage. You can specify any directory accessible to Home Assistant to store your photos, with each album in its own subdirectory."
     }
   }
 }
