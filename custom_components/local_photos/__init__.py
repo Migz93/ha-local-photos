@@ -95,8 +95,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         for entry in hass.config_entries.async_entries(DOMAIN)
         if entry.state == ConfigEntryState.LOADED
     ]
-    if len(loaded_entries) == 1:
-        for service_name in hass.services.async_services()[DOMAIN]:
+    # Only remove services when there are no more loaded entries
+    if len(loaded_entries) == 0:
+        for service_name in hass.services.async_services().get(DOMAIN, []):
             hass.services.async_remove(DOMAIN, service_name)
 
     return unload_ok

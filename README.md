@@ -44,23 +44,71 @@ Platform | Name | Description
 
 ### Setting Up Your Photo Directory
 
-1. Create a directory for your photos (if it doesn't already exist). You can use any directory accessible to Home Assistant.
-2. Place your photos in this directory. You can access this directory through the File Editor add-on or via SFTP/Samba depending on your Home Assistant setup.
-3. You can organize photos into albums by creating subdirectories. For example:
+1. Create a directory for your photos and add your images to it. You can use any location accessible to Home Assistant and manage files via the File Editor add-on or SFTP/Samba.
+2. You can organize photos into albums by creating subdirectories. For example:
    - `/config/www/images/vacation/` - For vacation photos
    - `/config/www/images/family/` - For family photos
    - `/config/www/images/holidays/` - For holiday photos
-4. Supported image formats include: JPG, JPEG, PNG, GIF, BMP, and WEBP.
+   - `/media/Photos/vacation/` - For vacation photos on external media
+3. Supported image formats include: JPG, JPEG, PNG, GIF, BMP, and WEBP.
 
 ### Adding Albums to Home Assistant
 
 1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Local Photos".
 2. Click on the integration and enter the path to your photos directory.
-3. **Important**: The directory must exist before you can proceed. The integration will not create it for you.
+3. If you're using a media source in Home Assistant OS (like a samba share), it will be mounted in the `/media` folder. For example, for a samba share called "Photos", you would set the path as `/media/Photos`.
 4. After entering a valid directory path, you'll be presented with a list of available albums (subdirectories) in that location.
 5. Select the album you want to display. If you want to display all photos, select "All Photos".
-6. The album will now be available as a camera entity in Home Assistant with a device name that reflects the selected album (e.g., "Local Photos Vacation").
+6. The album will be available as a camera entity in Home Assistant with a device name that reflects the selected album (e.g., "Local Photos Vacation").
 7. To add another album, simply add the integration again and select a different album.
+
+## Configuration
+
+After installation, add the integration through the Home Assistant UI:
+
+1. Go to **Settings** → **Devices & Services**
+2. Click the **+ ADD INTEGRATION** button
+3. Search for "Local Photos" and select it
+4. Follow the configuration steps to specify your photos directory and select an album
+
+The integration will scan the specified directory for subdirectories, each representing an album. Each album will be added as a separate camera entity.
+
+### Settings
+
+Each album has the following settings that can be configured through the entity settings:
+
+#### Crop
+
+This setting controls how images are displayed:
+
+- **Original**: Maintains the original aspect ratio of the image, adding black bars if necessary
+- **Crop**: Crops the image to fill the entire frame
+- **Combine images**: For landscape displays showing portrait images (or vice versa), combines two similar images side by side
+
+#### Aspect Ratio
+
+Controls the target aspect ratio for displaying images:
+
+- **16:10**: Default widescreen aspect ratio (1.6:1)
+- **16:9**: Common TV/monitor widescreen format (1.78:1)
+- **4:3**: Traditional monitor aspect ratio (1.33:1)
+- **1:1**: Square aspect ratio
+
+Note: When using the "Original" crop mode, the image will maintain its original aspect ratio but will be fitted within the selected aspect ratio frame. With "Crop" mode, images will be cropped to exactly match the selected aspect ratio.
+
+#### Image Selection
+
+Controls how the next image is selected:
+
+- **Random**: Selects a random image from the album
+- **Alphabetical order**: Cycles through images in alphabetical order
+
+#### Update Interval
+
+Controls how often the displayed image changes:
+
+- Options range from 10 seconds to 1 day
+- Set to "Manual" to disable automatic updates
 
 ## Crop modes
 
@@ -85,15 +133,15 @@ show_state: false
 show_name: false
 camera_view: auto
 type: picture-entity
-entity: camera.local_photos_photos_media
+entity: camera.local_photos_photos
 aspect_ratio: '1:1'
 tap_action:
   action: call-service
   service: local_photos.next_media
   data:
-    mode: RANDOM
+    mode: Random
   target:
-    entity_id: camera.local_photos_photos_media
+    entity_id: camera.local_photos_photos
 ```
 
 ### Lovelace wall panel
@@ -104,19 +152,12 @@ Home Assistant Dashboard configuration yaml (raw config):
 ```yaml
 wallpanel:
   enabled: true
-  hide_toolbar: true
-  hide_sidebar: true
-  fullscreen: true
-  image_fit: cover
-  image_url: media-entity://camera.local_photos_photos_media,
+  image_url: media-entity://camera.local_photos_photos
   cards:
-      # Note: For this markdown card to work you need to enable write metadata in the integration settings.
     - type: markdown
       content: >
-        {{states.camera.local_photos_photos_media.attributes.media_metadata.path}}
+        {{states.camera.local_photos_photos.attributes.media_metadata.path}}
 ```
-
-**Important** Make sure to align the image crop modes with the configuration of the wall panel, if not set correctly images might appear blurry. For crop mode [original](#original), set the `image_fit` property to `contain`.
 
 ## Service
 
@@ -128,7 +169,7 @@ It is possible to control the album using the service exposed by `local_photos`.
 ```
 service: local_photos.next_media
 data:
-  entity_id: camera.local_photos_photos_media
+  entity_id: camera.local_photos_photos
   mode: Random
 ```
 

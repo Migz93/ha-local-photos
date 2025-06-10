@@ -59,7 +59,7 @@
         "data": {
           "attribute_metadata": "Write metadata to attributes"
         },
-        "description": "Adjust Local Photos options.",
+        "description": "Adjust Local Photos options. You can configure image display settings including aspect ratio.",
         "title": "Settings"
       }
     }

@@ -17,6 +17,8 @@ from .const import (
     SETTING_IMAGESELECTION_MODE_OPTIONS,
     SETTING_INTERVAL_DEFAULT_OPTION,
     SETTING_INTERVAL_OPTIONS,
+    SETTING_ASPECT_RATIO_DEFAULT_OPTION,
+    SETTING_ASPECT_RATIO_OPTIONS,
 )
 from .coordinator import Coordinator, CoordinatorManager
 
@@ -35,6 +37,7 @@ async def async_setup_entry(
         entities.append(LocalPhotosSelectCropMode(coordinator))
         entities.append(LocalPhotosSelectImageSelectionMode(coordinator))
         entities.append(LocalPhotosSelectInterval(coordinator))
+        entities.append(LocalPhotosSelectAspectRatio(coordinator))
 
     async_add_entities(
         entities,
@@ -188,4 +191,53 @@ class LocalPhotosSelectInterval(SelectEntity, RestoreEntity):
             self.coordinator.set_interval(SETTING_INTERVAL_DEFAULT_OPTION)
         else:
             self.coordinator.set_interval(state.state)
+        self.async_write_ha_state()
+
+
+class LocalPhotosSelectAspectRatio(SelectEntity, RestoreEntity):
+    """Selection of aspect ratio"""
+
+    coordinator: Coordinator
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:aspect-ratio"
+
+    def __init__(self, coordinator: Coordinator) -> None:
+        """Initialize a sensor class."""
+        super().__init__()
+        self.coordinator = coordinator
+        self.entity_description = SelectEntityDescription(
+            key="aspect_ratio",
+            name="Aspect ratio",
+            icon=self._attr_icon,
+            entity_category=EntityCategory.CONFIG,
+            options=SETTING_ASPECT_RATIO_OPTIONS,
+        )
+        album_id = self.coordinator.album.id
+        self._attr_device_info = self.coordinator.get_device_info()
+        self._attr_unique_id = f"{album_id}-aspect-ratio"
+
+    @property
+    def should_poll(self) -> bool:
+        """No need to poll."""
+        return False
+
+    @property
+    def current_option(self) -> str | None:
+        """Return the selected entity option to represent the entity state."""
+        return self.coordinator.aspect_ratio
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option."""
+        if option is not self.coordinator.aspect_ratio:
+            self.coordinator.set_aspect_ratio(option)
+            self.async_write_ha_state()
+
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        state = await self.async_get_last_state()
+        if not state or state.state not in SETTING_ASPECT_RATIO_OPTIONS:
+            self.coordinator.set_aspect_ratio(SETTING_ASPECT_RATIO_DEFAULT_OPTION)
+        else:
+            self.coordinator.set_aspect_ratio(state.state)
         self.async_write_ha_state()

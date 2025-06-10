@@ -26,17 +26,24 @@ from PIL import Image
 
 from .local_photos import LocalPhotosManager, Album, MediaItem
 from .const import (
+    CONF_ALBUM_ID,
     CONF_ALBUM_ID_FAVORITES,
     CONF_FOLDER_PATH,
+    CONF_WRITEMETADATA,
     DOMAIN,
     MANUFACTURER,
     SETTING_CROP_MODE_COMBINED,
     SETTING_CROP_MODE_CROP,
     SETTING_CROP_MODE_DEFAULT_OPTION,
+    SETTING_CROP_MODE_ORIGINAL,
     SETTING_IMAGESELECTION_MODE_ALPHABETICAL,
     SETTING_IMAGESELECTION_MODE_DEFAULT_OPTION,
+    SETTING_IMAGESELECTION_MODE_RANDOM,
     SETTING_INTERVAL_DEFAULT_OPTION,
     SETTING_INTERVAL_MAP,
+    WRITEMETADATA_DEFAULT_OPTION,
+    SETTING_ASPECT_RATIO_DEFAULT_OPTION,
+    ASPECT_RATIO_VALUES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -114,6 +121,7 @@ class Coordinator(DataUpdateCoordinator):
     crop_mode = SETTING_CROP_MODE_DEFAULT_OPTION
     image_selection_mode = SETTING_IMAGESELECTION_MODE_DEFAULT_OPTION
     interval = SETTING_INTERVAL_DEFAULT_OPTION
+    aspect_ratio = SETTING_ASPECT_RATIO_DEFAULT_OPTION
 
     def __init__(
         self,
@@ -183,6 +191,14 @@ class Coordinator(DataUpdateCoordinator):
     def set_interval(self, interval: str):
         """Set interval"""
         self.interval = interval
+        self.async_update_listeners()
+
+    def set_aspect_ratio(self, aspect_ratio: str):
+        """Set aspect ratio"""
+        self.aspect_ratio = aspect_ratio
+        # Clear the cache when aspect ratio changes
+        self.current_media_cache = {}
+        self.async_update_listeners()
 
     def get_config_option(self, prop, default) -> ConfigEntry:
         """Get config option."""
@@ -281,16 +297,27 @@ class Coordinator(DataUpdateCoordinator):
 
     async def get_media_data(self, width: int | None = None, height: int | None = None):
         """Get a binary image data for the current media"""
-        width = width or 1024
-        height = height or 512
+        if self.current_media_primary is None:
+            return None
 
-        cache_key = f"w{width}h{height}{self.crop_mode}"
+        # If no dimensions are provided, use default dimensions based on aspect ratio
+        if width is None or height is None:
+            # Get aspect ratio values
+            aspect_ratio_values = ASPECT_RATIO_VALUES.get(self.aspect_ratio, (16, 10))
+            if width is None and height is None:
+                # If neither dimension is provided, use a standard width and calculate height
+                width = 1920
+                height = int(width * aspect_ratio_values[1] / aspect_ratio_values[0])
+            elif width is None:
+                # If only height is provided, calculate width based on aspect ratio
+                width = int(height * aspect_ratio_values[0] / aspect_ratio_values[1])
+            elif height is None:
+                # If only width is provided, calculate height based on aspect ratio
+                height = int(width * aspect_ratio_values[1] / aspect_ratio_values[0])
+
+        cache_key = f"w{width}h{height}{self.crop_mode}{self.aspect_ratio}"
         if cache_key in self.current_media_cache:
             return self.current_media_cache[cache_key]
-
-        if self.current_media_primary is None:
-            _LOGGER.warning("No media selected")
-            return None
 
         if self.crop_mode == SETTING_CROP_MODE_COMBINED:
             result = await self._get_combined_media_data(width, height)
@@ -318,9 +345,13 @@ class Coordinator(DataUpdateCoordinator):
                     if self.crop_mode == SETTING_CROP_MODE_CROP:
                         # Crop mode - resize to fill the target dimensions, may crop parts of the image
                         img_resized = self._resize_and_crop_image(img, width, height)
-                    else:  # Default to SETTING_CROP_MODE_ORIGINAL
+                    elif self.crop_mode == SETTING_CROP_MODE_ORIGINAL:
                         # Original mode - resize to fit within the target dimensions, may have letterboxing
+                        # If using original mode, we respect the original aspect ratio of the image
                         img_resized = self._resize_to_fit(img, width, height)
+                    else:
+                        # For combined mode, we'll still use resize_and_crop_image to ensure proper filling
+                        img_resized = self._resize_and_crop_image(img, width, height)
                     
                     # Convert the resized image back to bytes
                     img_byte_arr = io.BytesIO()

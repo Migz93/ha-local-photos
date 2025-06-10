@@ -1,6 +1,6 @@
 {
     "name": "Local Photos",
-    "hacs": "1.0.0",
+    "hacs": "1.1.0",
     "homeassistant": "2025.4.4",
     "render_readme": true,
     "zip_release": true,
